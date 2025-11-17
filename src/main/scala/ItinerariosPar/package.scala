@@ -63,4 +63,31 @@ package object ItinerariosPar {
     }
   }
 
+  def itinerariosEscalasPar(vuelos: List[Vuelo],
+                            aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+
+    def numEscalasTotales(it: Itinerario): Int = {
+      @tailrec
+      def loop(resto: Itinerario, vuelos: Int, escs: Int): Int = resto match {
+        case Nil => vuelos + escs
+        case v :: t => loop(t, vuelos + 1, escs + v.Esc)
+      }
+
+      loop(it, 0, 0)
+    }
+
+    val itBasePar = itinerariosPar(vuelos, aeropuertos)
+
+    val maxItinerarios = 3
+
+    (org: String, dst: String) => {
+      val todos: List[Itinerario] = itBasePar(org, dst)
+
+      val ordenados: List[Itinerario] =
+        todos.sortBy(it => numEscalasTotales(it))
+
+      ordenados.take(maxItinerarios)
+    }
+  }
+
 }
