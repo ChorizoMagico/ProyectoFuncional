@@ -203,4 +203,28 @@ package object ItinerariosPar {
     }
   }
 
+  def itinerariosAirePar(vuelos: List[Vuelo],
+                         aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+
+    (cod1: String, cod2: String) => {
+
+      def tiempoEnAire(itinerario: Itinerario): Int =
+        obtenerTiempoVueloPar(aeropuertos, itinerario)
+
+      val todos: List[Itinerario] =
+        itinerariosPar(vuelos, aeropuertos)(cod1, cod2)
+
+      val pares: List[(Itinerario, Int)] =
+        todos
+          .map(it => task((it, tiempoEnAire(it))))
+          .map(_.join())
+
+      pares
+        .sortBy(_._2)
+        .take(3)
+        .map(_._1)
+    }
+  }
+
+
 }

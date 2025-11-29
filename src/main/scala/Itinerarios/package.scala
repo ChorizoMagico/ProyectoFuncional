@@ -170,4 +170,17 @@ package object Itinerarios {
     
   }
 
+  def itinerariosAire(vuelos: List[Vuelo],
+                      aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+    (cod1: String, cod2: String) => {
+      def tiempoEnAire(itinerario: Itinerario): Int =
+        obtenerTiempoVuelo(aeropuertos, itinerario)
+
+      itinerarios(vuelos, aeropuertos)(cod1, cod2)
+        .sortBy(tiempoEnAire)
+        .take(3)
+    }
+  }
+
+
 }
