@@ -1,40 +1,93 @@
-import Datos._
-import Itinerarios._
 
-// Ejemplo curso pequeño
-val itsCurso = itinerarios(vuelosCurso,aeropuertosCurso)
-//2.1 Aeropuertos incomunicados
-val its1 = itsCurso("MID", "SVCS")
-val its2 = itsCurso("CLO", "SVCS")
+case class Aeropuerto(Cod: String, X: Int, Y: Int, GMT: Int)
 
-// 4 itinerarios CLO-SVO
+case class Vuelo(Aln: String, Num: Int, Org: String, HS: Int, MS: Int, Dst: String, HL: Int, ML: Int, Esc: Int)
 
-val its3 = itsCurso("CLO","SVO")
+type Itinerario = List[Vuelo]
 
-//2 itinerarios CLO-MEX
+val aeropuertos= List(
+  Aeropuerto("CTG", 300, 800, -500), // Cartagena
+  Aeropuerto("PTY", 400, 1000, -500), // Ciudad de Panamá
+)
 
-val its4 = itsCurso("CLO", "MEX")
+val vuelos = List(
+  Vuelo("COPA", 1234, "CTG", 10, 0, "PTY", 11, 30, 0),
+  Vuelo("COPA", 1234, "CTG", 2, 0, "PTY", 11, 30, 0),
+  Vuelo("COPA", 1234, "CTG", 11, 15, "PTY", 11, 30, 0),
 
-//2 itinerarios CTG-PTY
-val its5 = itsCurso("CTG","PTY")
-
-val itsTiempoCurso = itinerariosTiempo(vuelosCurso,aeropuertosCurso)
-
-// prueba itinerariosTiempo
-val itst1 = itsTiempoCurso("MID", "SVCS")
-val itst2 = itsTiempoCurso("CLO", "SVCS")
-
-// 4 itinerarios CLO-SVO
-
-val itst3 = itsTiempoCurso("CLO","SVO")
-
-//2 itinerarios CLO-MEX
-
-val itst4 = itsTiempoCurso("CLO", "MEX")
-
-//2 itinerarios CTG-PTY
-val itst5 = itsTiempoCurso("CTG","PTY")
+)
 
 
-itinerarios(vuelosA1,aeropuertos)("HOU","BNA")
-itinerariosTiempo(vuelosA1,aeropuertos)("HOU","BNA")
+def itinerarios(vuelos: List[Vuelo],
+                aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+
+  def pertenece(x: String, xs: List[String]): Boolean = xs match {
+    case Nil => false
+    case h :: t =>
+      if (h == x) true
+      else pertenece(x, t)
+  }
+
+  def verCaminos(actual: String,
+                 dst: String,
+                 visitados: List[String]): List[Itinerario] = {
+
+    if (actual == dst) {
+      List(Nil)
+    } else {
+      val caminos =
+        for {
+          v <- vuelos
+          if v.Org == actual
+          if !pertenece(v.Dst, visitados)
+          subcamino <- verCaminos(v.Dst, dst, v.Dst :: visitados)
+        } yield v :: subcamino
+
+      caminos
+    }
+  }
+
+  (org: String, dst: String) => {
+    verCaminos(org, dst, List(org))
+  }
+}
+
+
+def itinerarioSalida(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String, Int, Int) => Itinerario = {
+
+  def aMinutos(h: Int, m: Int): Int = h * 60 + m
+
+  (org: String, dst: String, hCita: Int, mCita: Int) => {
+
+    val todosItinerarios = itinerarios(vuelos, aeropuertos)(org, dst)
+
+    if (todosItinerarios.isEmpty) {
+      throw new Exception(s"No existen rutas entre $org y $dst")
+    }
+
+    val citaMinutos = aMinutos(hCita, mCita)
+
+    val mejorItinerario = todosItinerarios.maxBy { itin =>
+      val primerVuelo = itin.head
+      val ultimoVuelo = itin.last
+
+      val salidaMinutos = aMinutos(primerVuelo.HS, primerVuelo.MS)
+      val llegadaMinutos = aMinutos(ultimoVuelo.HL, ultimoVuelo.ML)
+
+      if (llegadaMinutos <= citaMinutos) {
+        salidaMinutos
+      } else {
+        salidaMinutos - 1440
+      }
+    }
+
+    mejorItinerario
+  }
+}
+
+
+val itSalidaCurso = itinerarioSalida(vuelos, aeropuertos)
+
+val itsal1 = itSalidaCurso("CTG", "PTY", 11,40)
+val itsal2 = itSalidaCurso("CTG", "PTY", 11,55)
+val itsal3 = itSalidaCurso("CTG", "PTY", 10,31)
