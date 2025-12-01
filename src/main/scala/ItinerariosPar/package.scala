@@ -6,32 +6,8 @@ package object ItinerariosPar {
   import common._
   import Itinerarios._
 
-  def obtenerTiempoEsperaPar(aeropuertos: List[Aeropuerto], itinerario: Itinerario, acc: Int): Int = {
-    itinerario match {
-      case Nil | _ :: Nil => acc
-      case vuelo1 :: vuelo2 :: tail => {
-        val (v1DstGMT, v2OrgGMT) = parallel(obtenerGMT(aeropuertos, vuelo1.Dst), obtenerGMT(aeropuertos, vuelo2.Org))
 
-        val HLv1GMT = if (vuelo1.HL - v1DstGMT < 0) (vuelo1.HL - v1DstGMT + 24) else (vuelo1.HL - v1DstGMT)
-        val HSv2GMT = if (vuelo2.HS - v2OrgGMT < 0) (vuelo2.HS - v2OrgGMT + 24) else (vuelo2.HS - v2OrgGMT)
-
-        val diferenciaHvGMT = (HSv2GMT * 60 + vuelo2.MS) - (HLv1GMT * 60 + vuelo1.ML)
-
-        obtenerTiempoEsperaPar(aeropuertos, vuelo2 :: tail, acc + diferenciaHvGMT)
-      }
-    }
-  }
-
-  def obtenerTiempoVueloPar(aeropuertos: List[Aeropuerto], itinerario: Itinerario): Int = {
-    itinerario.foldRight(0)((vuelo, acc) => {
-      val (vOrgGMT, vDstGMT) = parallel(obtenerGMT(aeropuertos, vuelo.Org), obtenerGMT(aeropuertos, vuelo.Dst))
-      val HSvGMT = if (vuelo.HS - vOrgGMT < 0) (vuelo.HS - vOrgGMT + 24) else (vuelo.HS - vOrgGMT)
-      val HLvGMT = if (vuelo.HL - vDstGMT < 0) (vuelo.HL - vDstGMT + 24) else (vuelo.HL - vDstGMT)
-      val diferenciaHvGMT = ((HLvGMT * 60 + vuelo.ML) - (HSvGMT * 60 + vuelo.MS))
-      if (diferenciaHvGMT < 0) acc + diferenciaHvGMT + (24 * 60) else acc + diferenciaHvGMT
-    })
-  }
-
+  // Función 1. itinerariosPar
   def itinerariosPar(vuelos: List[Vuelo],
                      aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
 
@@ -89,6 +65,34 @@ package object ItinerariosPar {
     }
   }
 
+  // Función 2. itinerariosTiempoPar
+
+  def obtenerTiempoEsperaPar(aeropuertos: List[Aeropuerto], itinerario: Itinerario, acc: Int): Int = {
+    itinerario match {
+      case Nil | _ :: Nil => acc
+      case vuelo1 :: vuelo2 :: tail => {
+        val (v1DstGMT, v2OrgGMT) = parallel(obtenerGMT(aeropuertos, vuelo1.Dst), obtenerGMT(aeropuertos, vuelo2.Org))
+
+        val HLv1GMT = if (vuelo1.HL - v1DstGMT < 0) (vuelo1.HL - v1DstGMT + 24) else (vuelo1.HL - v1DstGMT)
+        val HSv2GMT = if (vuelo2.HS - v2OrgGMT < 0) (vuelo2.HS - v2OrgGMT + 24) else (vuelo2.HS - v2OrgGMT)
+
+        val diferenciaHvGMT = (HSv2GMT * 60 + vuelo2.MS) - (HLv1GMT * 60 + vuelo1.ML)
+
+        obtenerTiempoEsperaPar(aeropuertos, vuelo2 :: tail, acc + diferenciaHvGMT)
+      }
+    }
+  }
+
+  def obtenerTiempoVueloPar(aeropuertos: List[Aeropuerto], itinerario: Itinerario): Int = {
+    itinerario.foldRight(0)((vuelo, acc) => {
+      val (vOrgGMT, vDstGMT) = parallel(obtenerGMT(aeropuertos, vuelo.Org), obtenerGMT(aeropuertos, vuelo.Dst))
+      val HSvGMT = if (vuelo.HS - vOrgGMT < 0) (vuelo.HS - vOrgGMT + 24) else (vuelo.HS - vOrgGMT)
+      val HLvGMT = if (vuelo.HL - vDstGMT < 0) (vuelo.HL - vDstGMT + 24) else (vuelo.HL - vDstGMT)
+      val diferenciaHvGMT = ((HLvGMT * 60 + vuelo.ML) - (HSvGMT * 60 + vuelo.MS))
+      if (diferenciaHvGMT < 0) acc + diferenciaHvGMT + (24 * 60) else acc + diferenciaHvGMT
+    })
+  }
+
   def itinerariosTiempoPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
     (a: String, b: String) => {
 
@@ -106,6 +110,8 @@ package object ItinerariosPar {
         .map(_.join()).sortBy(_._2).take(3).map(_._1)
     }
   }
+
+  // Función 3. itinerariosEscalasPar
 
   def itinerariosEscalasPar(vuelos: List[Vuelo],
                             aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
@@ -131,6 +137,102 @@ package object ItinerariosPar {
         todos.sortBy(it => numEscalasTotales(it))
 
       ordenados.take(maxItinerarios)
+    }
+  }
+
+  // Función 4. itinerariosAirePar
+
+  def itinerariosAirePar(vuelos: List[Vuelo],
+                         aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+
+    (cod1: String, cod2: String) => {
+
+      def tiempoEnAire(itinerario: Itinerario): Int =
+        obtenerTiempoVueloPar(aeropuertos, itinerario)
+
+      val todos: List[Itinerario] =
+        itinerariosPar(vuelos, aeropuertos)(cod1, cod2)
+
+      val pares: List[(Itinerario, Int)] =
+        todos
+          .map(it => task((it, tiempoEnAire(it))))
+          .map(_.join())
+
+      pares
+        .sortBy(_._2)
+        .take(3)
+        .map(_._1)
+    }
+  }
+
+  // Función 5. itinerarioSalidaPar
+
+  def itinerarioSalidaPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String, Int, Int) => Itinerario = {
+
+    val aeropuertosMap = aeropuertos.map(a => a.Cod -> a).toMap
+
+    def convertirLocalAUTC(horaLocal: Int, minutoLocal: Int, gmt: Int): (Int, Int) = {
+      val horaUTC = horaLocal - gmt
+      if (horaUTC < 0) (horaUTC + 24, minutoLocal)
+      else if (horaUTC >= 24) (horaUTC - 24, minutoLocal)
+      else (horaUTC, minutoLocal)
+    }
+
+    def calcularHoraLlegada(itinerario: Itinerario): (Int, Int) = {
+      val ultimoVuelo = itinerario.last
+      val aeropuertoDestino = aeropuertosMap.getOrElse(ultimoVuelo.Dst,
+        throw new Exception(s"Aeropuerto ${ultimoVuelo.Dst} no encontrado"))
+
+      convertirLocalAUTC(ultimoVuelo.HL, ultimoVuelo.ML, aeropuertoDestino.GMT)
+    }
+
+    def horaSalidaMinutos(itinerario: Itinerario): Int = {
+      val primerVuelo = itinerario.head
+      primerVuelo.HS * 60 + primerVuelo.MS
+    }
+
+    def llegaAntesDeCita(itinerario: Itinerario, hCita: Int, mCita: Int): Boolean = {
+      val (hLlegada, mLlegada) = calcularHoraLlegada(itinerario)
+      hLlegada < hCita || (hLlegada == hCita && mLlegada <= mCita)
+    }
+
+    def filtrarYMaximoPar(its: List[Itinerario], hCita: Int, mCita: Int): Option[Itinerario] = {
+      val UMBRAL = 20
+      if (its.length <= UMBRAL) {
+        val validos = its.filter(i => llegaAntesDeCita(i, hCita, mCita))
+        if (validos.isEmpty) None
+        else Some(validos.maxBy(horaSalidaMinutos))
+      } else {
+        val (izq, der) = its.splitAt(its.length / 2)
+
+        val taskIzq = task { filtrarYMaximoPar(izq, hCita, mCita) }
+        val resDer = filtrarYMaximoPar(der, hCita, mCita)
+
+        val resIzq = taskIzq.join()
+
+        (resIzq, resDer) match {
+          case (Some(i), Some(d)) =>
+            if (horaSalidaMinutos(i) >= horaSalidaMinutos(d)) Some(i) else Some(d)
+          case (Some(i), None) => Some(i)
+          case (None, Some(d)) => Some(d)
+          case (None, None) => None
+        }
+      }
+    }
+
+    (org: String, dst: String, hDst: Int, mDst: Int) => {
+
+      val todosItinerarios = itinerariosPar(vuelos, aeropuertos)(org, dst)
+
+      if (todosItinerarios.isEmpty) {
+        throw new Exception(s"No hay itinerarios de $org a $dst disponibles!")
+      }
+
+      val mejorItinerario = filtrarYMaximoPar(todosItinerarios, hDst, mDst)
+
+      mejorItinerario.getOrElse(
+        throw new Exception(s"No hay itinerarios que lleguen antes de $hDst:$mDst")
+      )
     }
   }
 
