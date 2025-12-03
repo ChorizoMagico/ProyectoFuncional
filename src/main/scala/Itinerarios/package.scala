@@ -7,7 +7,8 @@ package object Itinerarios {
 
   // Función 1. itinerarios
   def itinerarios(vuelos: List[Vuelo],
-                  aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
+                  aeropuertos:
+                  List[Aeropuerto]): (String, String) => List[Itinerario] = {
 
     def pertenece(x: String, xs: List[String]): Boolean = xs match {
       case Nil => false
@@ -89,7 +90,7 @@ package object Itinerarios {
   }
 
   // Función 3. itinerariosEscalas
-
+b
   def itinerariosEscalas(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
     def numEscalasTotales(it: Itinerario): Int = {
       @tailrec
@@ -136,60 +137,34 @@ package object Itinerarios {
 
   def itinerarioSalida(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String, Int, Int) => Itinerario = {
 
-    def calcularHoraLlegada(itinerario: Itinerario, aeropuertos: List[Aeropuerto]): (Int, Int) = {
+    def aMinutos(h: Int, m: Int): Int = h * 60 + m
 
-      val ultimoVuelo = itinerario.last
-      val aeropuertoDestino = aeropuertos.find(_.Cod == ultimoVuelo.Dst).fold {
-        throw new Exception(s"Aeropuerto ${ultimoVuelo.Dst} no encontrado")
-      } { aeropuerto =>
-        aeropuerto
-      }
-
-      val gmtDestino = aeropuertoDestino.GMT
-      val horaUTC = convertirLocalAUTC(ultimoVuelo.HL, ultimoVuelo.ML, gmtDestino)
-
-      horaUTC
-    }
-
-    def convertirLocalAUTC(horaLocal: Int, minutoLocal: Int, gmt: Int): (Int, Int) = {
-      var horaUTC = horaLocal - gmt
-      var minutoUTC = minutoLocal
-
-      if (horaUTC < 0) horaUTC += 24
-      if (horaUTC >= 24) horaUTC -= 24
-
-      (horaUTC, minutoUTC)
-    }
-
-    def horaSalidaMinutos(itinerario: Itinerario): Int = {
-      val primerVuelo = itinerario.head
-      primerVuelo.HS * 60 + primerVuelo.MS
-    }
-
-    def llegaAntesDeCita(itinerario: Itinerario, hCita: Int, mCita: Int): Boolean = {
-      val (hLlegada, mLlegada) = calcularHoraLlegada(itinerario, aeropuertos)
-      hLlegada < hCita || (hLlegada == hCita && mLlegada <= mCita)
-    }
-
-    (org: String, dst: String, hDst: Int, mDst: Int) => {
+    (org: String, dst: String, hCita: Int, mCita: Int) => {
 
       val todosItinerarios = itinerarios(vuelos, aeropuertos)(org, dst)
 
       if (todosItinerarios.isEmpty) {
-        throw new Exception(s"No hay itinerarios de $org a $dst disponibles!")
+        throw new Exception(s"No existen rutas entre $org y $dst")
       }
 
-      val itinerariosValidos = todosItinerarios.filter(itin =>
-        llegaAntesDeCita(itin, hDst, mDst)
-      )
+      val citaMinutos = aMinutos(hCita, mCita)
 
-      if (itinerariosValidos.isEmpty) {
-        throw new Exception(s"No hay itinerarios que lleguen antes de $hDst:$mDst")
+      val mejorItinerario = todosItinerarios.maxBy { itin =>
+        val primerVuelo = itin.head
+        val ultimoVuelo = itin.last
+
+        val salidaMinutos = aMinutos(primerVuelo.HS, primerVuelo.MS)
+        val llegadaMinutos = aMinutos(ultimoVuelo.HL, ultimoVuelo.ML)
+
+        if (llegadaMinutos <= citaMinutos) {
+          salidaMinutos
+        } else {
+          salidaMinutos - 1440
+        }
       }
 
-      itinerariosValidos.maxBy(horaSalidaMinutos)
+      mejorItinerario
     }
-
   }
 
 
