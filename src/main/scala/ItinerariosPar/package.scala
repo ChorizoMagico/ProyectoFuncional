@@ -119,7 +119,9 @@ package object ItinerariosPar {
     def numEscalasTotales(it: Itinerario): Int = {
       @tailrec
       def loop(resto: Itinerario, vuelos: Int, escs: Int): Int = resto match {
-        case Nil => vuelos + escs
+        case Nil =>
+          if(vuelos == 0) vuelos + escs
+          else (vuelos - 1) + escs
         case v :: t => loop(t, vuelos + 1, escs + v.Esc)
       }
 
