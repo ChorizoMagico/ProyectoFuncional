@@ -90,13 +90,14 @@ package object Itinerarios {
   }
 
   // Función 3. itinerariosEscalas
-b
+
   def itinerariosEscalas(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
     def numEscalasTotales(it: Itinerario): Int = {
       @tailrec
       def loop(resto: Itinerario, vuelos: Int, escs: Int): Int = resto match {
         case Nil =>
-          vuelos + escs
+          if(vuelos == 0) vuelos + escs
+          else (vuelos - 1) + escs
         case v :: t =>
           loop(t, vuelos + 1, escs + v.Esc)
       }
