@@ -1,4 +1,6 @@
 import scala.annotation.tailrec
+import scala.collection.parallel.CollectionConverters._
+import scala.collection.parallel.immutable.ParSeq
 
 package object ItinerariosPar {
   
@@ -133,12 +135,18 @@ package object ItinerariosPar {
     val maxItinerarios = 3
 
     (org: String, dst: String) => {
+      // Obtener todos los itinerarios
       val todos: List[Itinerario] = itBasePar(org, dst)
 
-      val ordenados: List[Itinerario] =
-        todos.sortBy(it => numEscalasTotales(it))
+      // Paralelizar el cálculo de las escalas en los itinerarios
+      val itinerariosConEscalas: ParSeq[(Itinerario, Int)] =
+        todos.par.map(it => (it, numEscalasTotales(it)))  // Calcula las escalas de manera paralela
 
-      ordenados.take(maxItinerarios)
+      // Convertir el ParSeq a Seq y ordenarlos por el número de escalas
+      val ordenados = itinerariosConEscalas.toList.sortBy(_._2)  // Ordena por el número de escalas
+
+      // Devuelve los itinerarios ordenados según el número de escalas
+      ordenados.take(maxItinerarios).map(_._1)
     }
   }
 

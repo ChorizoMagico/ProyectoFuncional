@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="ProyectoFuncional,ProyectoFuncional.main,ProyectoFuncional.test,Taller Paralelismo de Datos 2024-II,proyectofuncional_5466,proyectofuncional_5466.main,proyectofuncional_5466.test" />
+    <profile name="sbt 1" modules="ProyectoFuncional,ProyectoFuncional.main,ProyectoFuncional.test,ProyectoPFC,ProyectoPFC.main,ProyectoPFC.test,Taller Paralelismo de Datos 2024-II,proyectofuncional_5466,proyectofuncional_5466.main,proyectofuncional_5466.test" />
     <profile name="sbt 2" modules="Taller Paralelismo de Datos 2024-II.main,Taller Paralelismo de Datos 2024-II.test">
       <option name="implicitConversions" value="true" />
       <option name="deprecationWarnings" value="true" />
