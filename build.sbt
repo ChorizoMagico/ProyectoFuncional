@@ -1,17 +1,26 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0"
 
-ThisBuild / scalaVersion := "2.13.10"
+ThisBuild / scalaVersion := "2.13.12"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "Taller Paralelismo de Datos 2024-II"
+    name := "ProyectoPFC",
+    fork := true, // Necesario para la memoria
+
+    // Agregamos este resolver por seguridad, ya que ScalaMeter a veces se esconde
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
+
+      // CAMBIO CLAVE: "com.storm-enroute" en lugar de "org.scalameter"
+      "com.storm-enroute" %% "scalameter" % "0.19"
+    ),
+
+    javaOptions ++= Seq(
+      "-Xmx8G",
+      "-XX:-UseGCOverheadLimit",
+      "-Xms1G",
+      "-XX:+UseG1GC"
+    )
   )
-scalacOptions ++= Seq("-language:implicitConversions", "-deprecation")
-libraryDependencies ++= Seq(
-  ("com.storm-enroute" %% "scalameter-core" % "0.21").cross(CrossVersion.for3Use2_13),
-  "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.3",
-  "org.scalameta" %% "munit" % "0.7.26" % Test
-)
-libraryDependencies +=
-  "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4"
-libraryDependencies += "org.plotly-scala" %% "plotly-render" % "0.8.1"
