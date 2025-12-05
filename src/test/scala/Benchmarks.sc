@@ -87,7 +87,7 @@ println(s"Aceleración 200 (seq/par): ${speedup(tSeq200, tPar200)}")
 // 2. Esqueleto de PRUEBAS PARA TODAS LAS FUNCIONES (COMENTADO)
 // --------------------------------------------------------------------
 
-/* ==================  itinerarios vs itinerariosPar  ==================
+// ==================  itinerarios vs itinerariosPar  ==================
 
 // --- 15 vuelos (A1) HOU -> BNA ---
 titulo("itinerarios vs itinerariosPar - 15 vuelos (A1) HOU -> BNA")
@@ -141,9 +141,9 @@ println(s"itinerarios 200 seq: $tItsSeq200")
 println(s"itinerarios 200 par: $tItsPar200")
 println(s"Aceleración itinerarios 200: ${speedup(tItsSeq200, tItsPar200)}")
 
-*/
 
-/* ==================  itinerariosEscalas vs itinerariosEscalasPar  ==================
+
+// ==================  itinerariosEscalas vs itinerariosEscalasPar  ==================
 
 // --- 15 vuelos (A1) HOU -> BNA ---
 titulo("itinerariosEscalas vs itinerariosEscalasPar - 15 vuelos (A1) HOU -> BNA")
@@ -197,9 +197,9 @@ println(s"Escalas 200 seq: $tEscSeq200")
 println(s"Escalas 200 par: $tEscPar200")
 println(s"Aceleración Escalas 200: ${speedup(tEscSeq200, tEscPar200)}")
 
-*/
 
-/* ==================  itinerariosAire vs itinerariosAirePar  ==================
+
+// ==================  itinerariosAire vs itinerariosAirePar  ==================
 
 // --- 15 vuelos (A1) HOU -> BNA ---
 titulo("itinerariosAire vs itinerariosAirePar - 15 vuelos (A1) HOU -> BNA")
@@ -253,9 +253,9 @@ println(s"Aire 200 seq: $tAirSeq200")
 println(s"Aire 200 par: $tAirPar200")
 println(s"Aceleración Aire 200: ${speedup(tAirSeq200, tAirPar200)}")
 
-*/
 
-/* ==================  itinerarioSalida vs itinerarioSalidaPar  ==================
+
+// ==================  itinerarioSalida vs itinerarioSalidaPar  ==================
 
 // --- 15 vuelos (A1) HOU -> BNA ---
 titulo("itinerarioSalida vs itinerarioSalidaPar - 15 vuelos (A1) HOU -> BNA")
@@ -309,6 +309,6 @@ println(s"Salida 200 seq: $tSalSeq200")
 println(s"Salida 200 par: $tSalPar200")
 println(s"Aceleración Salida 200: ${speedup(tSalSeq200, tSalPar200)}")
 
-*/
+
 
 println("\nBENCHMARKS COMPLETADOS")
