@@ -105,7 +105,7 @@ package object Itinerarios {
       loop(it, 0, 0)
     }
 
-    val itBase = itinerarios(vuelos, aeropuertos) // tu función 3.1
+    val itBase = itinerarios(vuelos, aeropuertos)
 
     val maxItinerarios = 3
 

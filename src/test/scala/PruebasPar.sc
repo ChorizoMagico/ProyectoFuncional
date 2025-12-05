@@ -1,14 +1,17 @@
 import Datos._
 import ItinerariosPar._
-// import scala.util.Random
+ import scala.util.Random
 import org.scalameter._
 
 def tiempoDe[T](body: => T) = {
-  val timeA1 = config(
-    KeyValue(Key.exec.minWarmupRuns -> 20),
-    KeyValue(Key.exec.maxWarmupRuns -> 60),
-    KeyValue(Key.verbose -> false)
-  ) withWarmer(new Warmer.Default) measure (body)
+  val timeA1 =
+    config(
+      Key.exec.minWarmupRuns -> 20,
+      Key.exec.maxWarmupRuns -> 60,
+      Key.verbose -> false
+    ) withWarmer(new Warmer.Default) measure {
+      body
+    }
   timeA1
 }
 

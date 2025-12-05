@@ -13,7 +13,6 @@ package object ItinerariosPar {
   def itinerariosPar(vuelos: List[Vuelo],
                      aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
 
-    //Verifica si un elemento pertenece a una lista
     @tailrec
     def pertenece(x: String, xs: List[String]): Boolean = xs match {
       case Nil => false
@@ -22,10 +21,8 @@ package object ItinerariosPar {
         else pertenece(x, t)
     }
 
-    // Umbral variable
     val UMBRAL = 4
 
-    // Versión paralela de verCaminos
     def verCaminosPar(actual: String,
                       dst: String,
                       visitados: List[String]): List[Itinerario] = {
@@ -36,7 +33,6 @@ package object ItinerariosPar {
         val salidas =
           vuelos.filter(v => v.Org == actual && !pertenece(v.Dst, visitados))
 
-        // Procesa una lista de vuelos de salida (secuencialmente)
         def procesar(xs: List[Vuelo]): List[Itinerario] =
           xs.flatMap { v =>
             val subcaminos = verCaminosPar(v.Dst, dst, v.Dst :: visitados)
@@ -44,10 +40,8 @@ package object ItinerariosPar {
           }
 
         if (salidas.length <= UMBRAL) {
-          // Rama pequeña: mejor secuencial
           procesar(salidas)
         } else {
-          // Rama grande: divide la lista de salidas y procesa en paralelo
           val (izq, der) = salidas.splitAt(salidas.length / 2)
 
           val tareaIzq = task {
@@ -61,7 +55,6 @@ package object ItinerariosPar {
       }
     }
 
-    // Función retornada
     (org: String, dst: String) => {
       verCaminosPar(org, dst, List(org))
     }
@@ -98,16 +91,13 @@ package object ItinerariosPar {
   def itinerariosTiempoPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
     (a: String, b: String) => {
 
-      // Función que obtiene el tiempo total de un itinerario
       def obtenerTiempoTotal(itinerario: Itinerario): Int = {
         val (tiempoVuelo, tiempoEspera) = parallel(obtenerTiempoVueloPar(aeropuertos, itinerario), obtenerTiempoEsperaPar(aeropuertos, itinerario, 0))
         tiempoVuelo + tiempoEspera
       }
 
-      // Obtener todos los itinerarios entre los aeropuertos a y b
       val todosItinerarios = itinerariosPar(vuelos, aeropuertos)(a, b)
 
-      // Mapear cada itinerario a su tiempo total en paralelo
       todosItinerarios.map(itinerario => task((itinerario, obtenerTiempoTotal(itinerario))))
         .map(_.join()).sortBy(_._2).take(3).map(_._1)
     }
@@ -135,17 +125,13 @@ package object ItinerariosPar {
     val maxItinerarios = 3
 
     (org: String, dst: String) => {
-      // Obtener todos los itinerarios
       val todos: List[Itinerario] = itBasePar(org, dst)
 
-      // Paralelizar el cálculo de las escalas en los itinerarios
       val itinerariosConEscalas: ParSeq[(Itinerario, Int)] =
-        todos.par.map(it => (it, numEscalasTotales(it)))  // Calcula las escalas de manera paralela
+        todos.par.map(it => (it, numEscalasTotales(it)))
 
-      // Convertir el ParSeq a Seq y ordenarlos por el número de escalas
-      val ordenados = itinerariosConEscalas.toList.sortBy(_._2)  // Ordena por el número de escalas
+      val ordenados = itinerariosConEscalas.toList.sortBy(_._2)
 
-      // Devuelve los itinerarios ordenados según el número de escalas
       ordenados.take(maxItinerarios).map(_._1)
     }
   }
