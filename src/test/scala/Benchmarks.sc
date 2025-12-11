@@ -3,7 +3,7 @@ import Itinerarios._
 import ItinerariosPar._
 import org.scalameter._
 
-// ========= Función del profe para medir tiempo =========
+// ========= Herramienta de medición de tiempo de ejecución =========
 def tiempoDe[T](body: => T) = {
   val timeA1 =
     config(
@@ -16,299 +16,307 @@ def tiempoDe[T](body: => T) = {
   timeA1
 }
 
-def titulo(txt: String): Unit = {
+def encabezado(txt: String): Unit = {
   println("\n" + "=" * 80)
   println(txt)
   println("=" * 80)
 }
 
-def speedup(tSeq: Quantity[Double], tPar: Quantity[Double]): Double =
-  tSeq.value / tPar.value
+def aceleracion(tSec: Quantity[Double], tPar: Quantity[Double]): Double =
+  tSec.value / tPar.value
 
 // --------------------------------------------------------------------
-// 1. itinerariosTiempo vs itinerariosTiempoPar  (ACTIVO)
+// 1. itinerarios vs itinerariosPar
 // --------------------------------------------------------------------
 
-// --- 15 vuelos (A1) HOU -> BNA ---
-titulo("itinerariosTiempo vs itinerariosTiempoPar - 15 vuelos (A1) HOU -> BNA")
+val conjuntoVuelos200 = vuelosC1 ++ vuelosC2
 
-val funTpoSeq15 = itinerariosTiempo(vuelosA1, aeropuertos)
-val funTpoPar15 = itinerariosTiempoPar(vuelosA1, aeropuertos)
 
-val tSeq15 = tiempoDe { funTpoSeq15("HOU", "BNA") }
-val tPar15 = tiempoDe { funTpoPar15("HOU", "BNA") }
+// --- Dataset pequeño: 15 vuelos (A1) ABQ -> SEA ---
+encabezado("itinerarios vs itinerariosPar - 15 vuelos (A1) ABQ -> SEA")
 
-println(s"Secuencial 15: $tSeq15")
-println(s"Paralelo   15: $tPar15")
-println(s"Aceleración 15 (seq/par): ${speedup(tSeq15, tPar15)}")
+val funcionSec15 = itinerarios(vuelosA1, aeropuertos)
+val funcionPar15 = itinerariosPar(vuelosA1, aeropuertos)
 
-// --- 40 vuelos (B1) DFW -> ORD ---
-titulo("itinerariosTiempo vs itinerariosTiempoPar - 40 vuelos (B1) DFW -> ORD")
+val tiempoSec15 = tiempoDe { funcionSec15("ABQ", "SEA") }
+val tiempoPar15 = tiempoDe { funcionPar15("ABQ", "SEA") }
 
-val funTpoSeq40 = itinerariosTiempo(vuelosB1, aeropuertos)
-val funTpoPar40 = itinerariosTiempoPar(vuelosB1, aeropuertos)
+println(s"Secuencial 15: $tiempoSec15")
+println(s"Paralelo   15: $tiempoPar15")
+println(s"Speedup 15 (sec/par): ${aceleracion(tiempoSec15, tiempoPar15)}")
 
-val tSeq40 = tiempoDe { funTpoSeq40("DFW", "ORD") }
-val tPar40 = tiempoDe { funTpoPar40("DFW", "ORD") }
+// --- Dataset mediano: 40 vuelos (B1) LAX -> ATL ---
+encabezado("itinerarios vs itinerariosPar - 40 vuelos (B1) LAX -> ATL")
 
-println(s"Secuencial 40: $tSeq40")
-println(s"Paralelo   40: $tPar40")
-println(s"Aceleración 40 (seq/par): ${speedup(tSeq40, tPar40)}")
+val funcionSec40 = itinerarios(vuelosB1, aeropuertos)
+val funcionPar40 = itinerariosPar(vuelosB1, aeropuertos)
 
-// --- 100 vuelos (C1) ORD -> TPA ---
-titulo("itinerariosTiempo vs itinerariosTiempoPar - 100 vuelos (C1) ORD -> TPA")
+val tiempoSec40 = tiempoDe { funcionSec40("LAX", "ATL") }
+val tiempoPar40 = tiempoDe { funcionPar40("LAX", "ATL") }
 
-val funTpoSeq100 = itinerariosTiempo(vuelosC1, aeropuertos)
-val funTpoPar100 = itinerariosTiempoPar(vuelosC1, aeropuertos)
+println(s"Secuencial 40: $tiempoSec40")
+println(s"Paralelo   40: $tiempoPar40")
+println(s"Speedup 40 (sec/par): ${aceleracion(tiempoSec40, tiempoPar40)}")
 
-val tSeq100 = tiempoDe { funTpoSeq100("ORD", "TPA") }
-val tPar100 = tiempoDe { funTpoPar100("ORD", "TPA") }
+/*
+// --- Dataset grande: 100 vuelos (C1) SFO -> ATL ---
+encabezado("itinerarios vs itinerariosPar - 100 vuelos (C1) SFO -> ATL")
 
-println(s"Secuencial 100: $tSeq100")
-println(s"Paralelo   100: $tPar100")
-println(s"Aceleración 100 (seq/par): ${speedup(tSeq100, tPar100)}")
+val funcionSec100 = itinerarios(vuelosC1, aeropuertos)
+val funcionPar100 = itinerariosPar(vuelosC1, aeropuertos)
 
-// --- 200 vuelos (C1 ++ C2) ORD -> TPA ---
-titulo("itinerariosTiempo vs itinerariosTiempoPar - 200 vuelos (C1 ++ C2) ORD -> TPA")
+val tiempoSec100 = tiempoDe { funcionSec100("SFO", "ATL") }
+val tiempoPar100 = tiempoDe { funcionPar100("SFO", "ATL") }
 
-val vuelos200b = vuelosC1 ++ vuelosC2
+println(s"Secuencial 100: $tiempoSec100")
+println(s"Paralelo   100: $tiempoPar100")
+println(s"Speedup 100 (sec/par): ${aceleracion(tiempoSec100, tiempoPar100)}")
 
-val funTpoSeq200 = itinerariosTiempo(vuelos200b, aeropuertos)
-val funTpoPar200 = itinerariosTiempoPar(vuelos200b, aeropuertos)
+// --- Dataset muy grande: 200 vuelos (C1 ++ C2) SFO -> ATL ---
+encabezado("itinerarios vs itinerariosPar - 200 vuelos (C1 ++ C2) SFO -> ATL")
 
-val tSeq200 = tiempoDe { funTpoSeq200("ORD", "TPA") }
-val tPar200 = tiempoDe { funTpoPar200("ORD", "TPA") }
+val funcionSec200 = itinerarios(conjuntoVuelos200, aeropuertos)
+val funcionPar200 = itinerariosPar(conjuntoVuelos200, aeropuertos)
 
-println(s"Secuencial 200: $tSeq200")
-println(s"Paralelo   200: $tPar200")
-println(s"Aceleración 200 (seq/par): ${speedup(tSeq200, tPar200)}")
+val tiempoSec200 = tiempoDe { funcionSec200("SFO", "ATL") }
+val tiempoPar200 = tiempoDe { funcionPar200("SFO", "ATL") }
+
+println(s"Secuencial 200: $tiempoSec200")
+println(s"Paralelo   200: $tiempoPar200")
+println(s"Speedup 200 (sec/par): ${aceleracion(tiempoSec200, tiempoPar200)}")
+
+*/
+
 
 // --------------------------------------------------------------------
-// 2. Esqueleto de PRUEBAS PARA TODAS LAS FUNCIONES (COMENTADO)
+// 2. itinerariosTiempo vs itinerariosTiempoPar
 // --------------------------------------------------------------------
 
-// ==================  itinerarios vs itinerariosPar  ==================
+// --- Dataset pequeño: 15 vuelos (A1) ABQ -> SEA ---
+encabezado("itinerariosTiempo vs itinerariosTiempoPar - 15 vuelos (A1) ABQ -> SEA")
 
-// --- 15 vuelos (A1) HOU -> BNA ---
-titulo("itinerarios vs itinerariosPar - 15 vuelos (A1) HOU -> BNA")
+val funTiempoSec15 = itinerariosTiempo(vuelosA1, aeropuertos)
+val funTiempoPar15 = itinerariosTiempoPar(vuelosA1, aeropuertos)
 
-val funItsSeq15 = itinerarios(vuelosA1, aeropuertos)
-val funItsPar15 = itinerariosPar(vuelosA1, aeropuertos)
+val tTiempoSec15 = tiempoDe { funTiempoSec15("ABQ", "SEA") }
+val tTiempoPar15 = tiempoDe { funTiempoPar15("ABQ", "SEA") }
 
-val tItsSeq15 = tiempoDe { funItsSeq15("HOU", "BNA") }
-val tItsPar15 = tiempoDe { funItsPar15("HOU", "BNA") }
+println(s"Tiempo secuencial 15: $tTiempoSec15")
+println(s"Tiempo paralelo 15: $tTiempoPar15")
+println(s"Factor aceleración 15: ${aceleracion(tTiempoSec15, tTiempoPar15)}")
 
-println(s"itinerarios 15 seq: $tItsSeq15")
-println(s"itinerarios 15 par: $tItsPar15")
-println(s"Aceleración itinerarios 15: ${speedup(tItsSeq15, tItsPar15)}")
+// --- Dataset mediano: 40 vuelos (B1) LAX -> ATL ---
+encabezado("itinerariosTiempo vs itinerariosTiempoPar - 40 vuelos (B1) LAX -> ATL")
 
-// --- 40 vuelos (B1) DFW -> ORD ---
-titulo("itinerarios vs itinerariosPar - 40 vuelos (B1) DFW -> ORD")
+val funTiempoSec40 = itinerariosTiempo(vuelosB1, aeropuertos)
+val funTiempoPar40 = itinerariosTiempoPar(vuelosB1, aeropuertos)
 
-val funItsSeq40 = itinerarios(vuelosB1, aeropuertos)
-val funItsPar40 = itinerariosPar(vuelosB1, aeropuertos)
+val tTiempoSec40 = tiempoDe { funTiempoSec40("LAX", "ATL") }
+val tTiempoPar40 = tiempoDe { funTiempoPar40("LAX", "ATL") }
 
-val tItsSeq40 = tiempoDe { funItsSeq40("DFW", "ORD") }
-val tItsPar40 = tiempoDe { funItsPar40("DFW", "ORD") }
+println(s"Tiempo secuencial 40: $tTiempoSec40")
+println(s"Tiempo paralelo 40: $tTiempoPar40")
+println(s"Factor aceleración 40: ${aceleracion(tTiempoSec40, tTiempoPar40)}")
 
-println(s"itinerarios 40 seq: $tItsSeq40")
-println(s"itinerarios 40 par: $tItsPar40")
-println(s"Aceleración itinerarios 40: ${speedup(tItsSeq40, tItsPar40)}")
+/*
+// --- Dataset grande: 100 vuelos (C1) SFO -> ATL ---
+encabezado("itinerariosTiempo vs itinerariosTiempoPar - 100 vuelos (C1) SFO -> ATL")
 
-// --- 100 vuelos (C1) ORD -> TPA ---
-titulo("itinerarios vs itinerariosPar - 100 vuelos (C1) ORD -> TPA")
+val funTiempoSec100 = itinerariosTiempo(vuelosC1, aeropuertos)
+val funTiempoPar100 = itinerariosTiempoPar(vuelosC1, aeropuertos)
 
-val funItsSeq100 = itinerarios(vuelosC1, aeropuertos)
-val funItsPar100 = itinerariosPar(vuelosC1, aeropuertos)
+val tTiempoSec100 = tiempoDe { funTiempoSec100("SFO", "ATL") }
+val tTiempoPar100 = tiempoDe { funTiempoPar100("SFO", "ATL") }
 
-val tItsSeq100 = tiempoDe { funItsSeq100("ORD", "TPA") }
-val tItsPar100 = tiempoDe { funItsPar100("ORD", "TPA") }
+println(s"Tiempo secuencial 100: $tTiempoSec100")
+println(s"Tiempo paralelo 100: $tTiempoPar100")
+println(s"Factor aceleración 100: ${aceleracion(tTiempoSec100, tTiempoPar100)}")
 
-println(s"itinerarios 100 seq: $tItsSeq100")
-println(s"itinerarios 100 par: $tItsPar100")
-println(s"Aceleración itinerarios 100: ${speedup(tItsSeq100, tItsPar100)}")
+// --- Dataset muy grande: 200 vuelos (C1 ++ C2) SFO -> ATL ---
+encabezado("itinerariosTiempo vs itinerariosTiempoPar - 200 vuelos (C1 ++ C2) SFO -> ATL")
 
-// --- 200 vuelos (C1 ++ C2) ORD -> TPA ---
-titulo("itinerarios vs itinerariosPar - 200 vuelos (C1 ++ C2) ORD -> TPA")
+val funTiempoSec200 = itinerariosTiempo(conjuntoVuelos200, aeropuertos)
+val funTiempoPar200 = itinerariosTiempoPar(conjuntoVuelos200, aeropuertos)
 
-val funItsSeq200 = itinerarios(vuelos200b, aeropuertos)
-val funItsPar200 = itinerariosPar(vuelos200b, aeropuertos)
+val tTiempoSec200 = tiempoDe { funTiempoSec200("SFO", "ATL") }
+val tTiempoPar200 = tiempoDe { funTiempoPar200("SFO", "ATL") }
 
-val tItsSeq200 = tiempoDe { funItsSeq200("ORD", "TPA") }
-val tItsPar200 = tiempoDe { funItsPar200("ORD", "TPA") }
+println(s"Tiempo secuencial 200: $tTiempoSec200")
+println(s"Tiempo paralelo 200: $tTiempoPar200")
+println(s"Factor aceleración 200: ${aceleracion(tTiempoSec200, tTiempoPar200)}")
 
-println(s"itinerarios 200 seq: $tItsSeq200")
-println(s"itinerarios 200 par: $tItsPar200")
-println(s"Aceleración itinerarios 200: ${speedup(tItsSeq200, tItsPar200)}")
+*/
 
 
+// 3. ==================  itinerariosEscalas vs itinerariosEscalasPar  ==================
 
-// ==================  itinerariosEscalas vs itinerariosEscalasPar  ==================
+// --- Dataset pequeño: 15 vuelos (A1) ABQ -> SEA ---
+encabezado("itinerariosEscalas vs itinerariosEscalasPar - 15 vuelos (A1) ABQ -> SEA")
 
-// --- 15 vuelos (A1) HOU -> BNA ---
-titulo("itinerariosEscalas vs itinerariosEscalasPar - 15 vuelos (A1) HOU -> BNA")
+val funEscalasSec15 = itinerariosEscalas(vuelosA1, aeropuertos)
+val funEscalasPar15 = itinerariosEscalasPar(vuelosA1, aeropuertos)
 
-val funEscSeq15 = itinerariosEscalas(vuelosA1, aeropuertos)
-val funEscPar15 = itinerariosEscalasPar(vuelosA1, aeropuertos)
+val tEscalasSec15 = tiempoDe { funEscalasSec15("ABQ", "SEA") }
+val tEscalasPar15 = tiempoDe { funEscalasPar15("ABQ", "SEA") }
 
-val tEscSeq15 = tiempoDe { funEscSeq15("HOU", "BNA") }
-val tEscPar15 = tiempoDe { funEscPar15("HOU", "BNA") }
+println(s"Escalas secuencial 15: $tEscalasSec15")
+println(s"Escalas paralelo 15: $tEscalasPar15")
+println(s"Mejora escalas 15: ${aceleracion(tEscalasSec15, tEscalasPar15)}")
 
-println(s"Escalas 15 seq: $tEscSeq15")
-println(s"Escalas 15 par: $tEscPar15")
-println(s"Aceleración Escalas 15: ${speedup(tEscSeq15, tEscPar15)}")
+// --- Dataset mediano: 40 vuelos (B1) LAX -> ATL ---
+encabezado("itinerariosEscalas vs itinerariosEscalasPar - 40 vuelos (B1) LAX -> ATL")
 
-// --- 40 vuelos (B1) DFW -> ORD ---
-titulo("itinerariosEscalas vs itinerariosEscalasPar - 40 vuelos (B1) DFW -> ORD")
+val funEscalasSec40 = itinerariosEscalas(vuelosB1, aeropuertos)
+val funEscalasPar40 = itinerariosEscalasPar(vuelosB1, aeropuertos)
 
-val funEscSeq40 = itinerariosEscalas(vuelosB1, aeropuertos)
-val funEscPar40 = itinerariosEscalasPar(vuelosB1, aeropuertos)
+val tEscalasSec40 = tiempoDe { funEscalasSec40("LAX", "ATL") }
+val tEscalasPar40 = tiempoDe { funEscalasPar40("LAX", "ATL") }
 
-val tEscSeq40 = tiempoDe { funEscSeq40("DFW", "ORD") }
-val tEscPar40 = tiempoDe { funEscPar40("DFW", "ORD") }
+println(s"Escalas secuencial 40: $tEscalasSec40")
+println(s"Escalas paralelo 40: $tEscalasPar40")
+println(s"Mejora escalas 40: ${aceleracion(tEscalasSec40, tEscalasPar40)}")
 
-println(s"Escalas 40 seq: $tEscSeq40")
-println(s"Escalas 40 par: $tEscPar40")
-println(s"Aceleración Escalas 40: ${speedup(tEscSeq40, tEscPar40)}")
+/*
+// --- Dataset grande: 100 vuelos (C1) SFO -> ATL ---
+encabezado("itinerariosEscalas vs itinerariosEscalasPar - 100 vuelos (C1) SFO -> ATL")
 
-// --- 100 vuelos (C1) ORD -> TPA ---
-titulo("itinerariosEscalas vs itinerariosEscalasPar - 100 vuelos (C1) ORD -> TPA")
+val funEscalasSec100 = itinerariosEscalas(vuelosC1, aeropuertos)
+val funEscalasPar100 = itinerariosEscalasPar(vuelosC1, aeropuertos)
 
-val funEscSeq100 = itinerariosEscalas(vuelosC1, aeropuertos)
-val funEscPar100 = itinerariosEscalasPar(vuelosC1, aeropuertos)
+val tEscalasSec100 = tiempoDe { funEscalasSec100("SFO", "ATL") }
+val tEscalasPar100 = tiempoDe { funEscalasPar100("SFO", "ATL") }
 
-val tEscSeq100 = tiempoDe { funEscSeq100("ORD", "TPA") }
-val tEscPar100 = tiempoDe { funEscPar100("ORD", "TPA") }
+println(s"Escalas secuencial 100: $tEscalasSec100")
+println(s"Escalas paralelo 100: $tEscalasPar100")
+println(s"Mejora escalas 100: ${aceleracion(tEscalasSec100, tEscalasPar100)}")
 
-println(s"Escalas 100 seq: $tEscSeq100")
-println(s"Escalas 100 par: $tEscPar100")
-println(s"Aceleración Escalas 100: ${speedup(tEscSeq100, tEscPar100)}")
+// --- Dataset muy grande: 200 vuelos (C1 ++ C2) SFO -> ATL ---
+encabezado("itinerariosEscalas vs itinerariosEscalasPar - 200 vuelos (C1 ++ C2) SFO -> ATL")
 
-// --- 200 vuelos (C1 ++ C2) ORD -> TPA ---
-titulo("itinerariosEscalas vs itinerariosEscalasPar - 200 vuelos (C1 ++ C2) ORD -> TPA")
+val funEscalasSec200 = itinerariosEscalas(conjuntoVuelos200, aeropuertos)
+val funEscalasPar200 = itinerariosEscalasPar(conjuntoVuelos200, aeropuertos)
 
-val funEscSeq200 = itinerariosEscalas(vuelos200b, aeropuertos)
-val funEscPar200 = itinerariosEscalasPar(vuelos200b, aeropuertos)
+val tEscalasSec200 = tiempoDe { funEscalasSec200("SFO", "ATL") }
+val tEscalasPar200 = tiempoDe { funEscalasPar200("SFO", "ATL") }
 
-val tEscSeq200 = tiempoDe { funEscSeq200("ORD", "TPA") }
-val tEscPar200 = tiempoDe { funEscPar200("ORD", "TPA") }
+println(s"Escalas secuencial 200: $tEscalasSec200")
+println(s"Escalas paralelo 200: $tEscalasPar200")
+println(s"Mejora escalas 200: ${aceleracion(tEscalasSec200, tEscalasPar200)}")
+*/
 
-println(s"Escalas 200 seq: $tEscSeq200")
-println(s"Escalas 200 par: $tEscPar200")
-println(s"Aceleración Escalas 200: ${speedup(tEscSeq200, tEscPar200)}")
 
+// 4.==================  itinerariosAire vs itinerariosAirePar  ==================
 
+// --- Dataset pequeño: 15 vuelos (A1) ABQ -> SEA ---
+encabezado("itinerariosAire vs itinerariosAirePar - 15 vuelos (A1) ABQ -> SEA")
 
-// ==================  itinerariosAire vs itinerariosAirePar  ==================
+val funAireSec15 = itinerariosAire(vuelosA1, aeropuertos)
+val funAirePar15 = itinerariosAirePar(vuelosA1, aeropuertos)
 
-// --- 15 vuelos (A1) HOU -> BNA ---
-titulo("itinerariosAire vs itinerariosAirePar - 15 vuelos (A1) HOU -> BNA")
+val tAireSec15 = tiempoDe { funAireSec15("ABQ", "SEA") }
+val tAirePar15 = tiempoDe { funAirePar15("ABQ", "SEA") }
 
-val funAirSeq15 = itinerariosAire(vuelosA1, aeropuertos)
-val funAirPar15 = itinerariosAirePar(vuelosA1, aeropuertos)
+println(s"Tiempo en aire sec 15: $tAireSec15")
+println(s"Tiempo en aire par 15: $tAirePar15")
+println(s"Ganancia aire 15: ${aceleracion(tAireSec15, tAirePar15)}")
 
-val tAirSeq15 = tiempoDe { funAirSeq15("HOU", "BNA") }
-val tAirPar15 = tiempoDe { funAirPar15("HOU", "BNA") }
+// --- Dataset mediano: 40 vuelos (B1) LAX -> ATL ---
+encabezado("itinerariosAire vs itinerariosAirePar - 40 vuelos (B1) LAX -> ATL")
 
-println(s"Aire 15 seq: $tAirSeq15")
-println(s"Aire 15 par: $tAirPar15")
-println(s"Aceleración Aire 15: ${speedup(tAirSeq15, tAirPar15)}")
+val funAireSec40 = itinerariosAire(vuelosB1, aeropuertos)
+val funAirePar40 = itinerariosAirePar(vuelosB1, aeropuertos)
 
-// --- 40 vuelos (B1) DFW -> ORD ---
-titulo("itinerariosAire vs itinerariosAirePar - 40 vuelos (B1) DFW -> ORD")
+val tAireSec40 = tiempoDe { funAireSec40("LAX", "ATL") }
+val tAirePar40 = tiempoDe { funAirePar40("LAX", "ATL") }
 
-val funAirSeq40 = itinerariosAire(vuelosB1, aeropuertos)
-val funAirPar40 = itinerariosAirePar(vuelosB1, aeropuertos)
+println(s"Tiempo en aire sec 40: $tAireSec40")
+println(s"Tiempo en aire par 40: $tAirePar40")
+println(s"Ganancia aire 40: ${aceleracion(tAireSec40, tAirePar40)}")
 
-val tAirSeq40 = tiempoDe { funAirSeq40("DFW", "ORD") }
-val tAirPar40 = tiempoDe { funAirPar40("DFW", "ORD") }
+/*
+// --- Dataset grande: 100 vuelos (C1) SFO -> ATL ---
+encabezado("itinerariosAire vs itinerariosAirePar - 100 vuelos (C1) SFO -> ATL")
 
-println(s"Aire 40 seq: $tAirSeq40")
-println(s"Aire 40 par: $tAirPar40")
-println(s"Aceleración Aire 40: ${speedup(tAirSeq40, tAirPar40)}")
+val funAireSec100 = itinerariosAire(vuelosC1, aeropuertos)
+val funAirePar100 = itinerariosAirePar(vuelosC1, aeropuertos)
 
-// --- 100 vuelos (C1) ORD -> TPA ---
-titulo("itinerariosAire vs itinerariosAirePar - 100 vuelos (C1) ORD -> TPA")
+val tAireSec100 = tiempoDe { funAireSec100("SFO", "ATL") }
+val tAirePar100 = tiempoDe { funAirePar100("SFO", "ATL") }
 
-val funAirSeq100 = itinerariosAire(vuelosC1, aeropuertos)
-val funAirPar100 = itinerariosAirePar(vuelosC1, aeropuertos)
+println(s"Tiempo en aire sec 100: $tAireSec100")
+println(s"Tiempo en aire par 100: $tAirePar100")
+println(s"Ganancia aire 100: ${aceleracion(tAireSec100, tAirePar100)}")
 
-val tAirSeq100 = tiempoDe { funAirSeq100("ORD", "TPA") }
-val tAirPar100 = tiempoDe { funAirPar100("ORD", "TPA") }
+// --- Dataset muy grande: 200 vuelos (C1 ++ C2) SFO -> ATL ---
+encabezado("itinerariosAire vs itinerariosAirePar - 200 vuelos (C1 ++ C2) SFO -> ATL")
 
-println(s"Aire 100 seq: $tAirSeq100")
-println(s"Aire 100 par: $tAirPar100")
-println(s"Aceleración Aire 100: ${speedup(tAirSeq100, tAirPar100)}")
+val funAireSec200 = itinerariosAire(conjuntoVuelos200, aeropuertos)
+val funAirePar200 = itinerariosAirePar(conjuntoVuelos200, aeropuertos)
 
-// --- 200 vuelos (C1 ++ C2) ORD -> TPA ---
-titulo("itinerariosAire vs itinerariosAirePar - 200 vuelos (C1 ++ C2) ORD -> TPA")
+val tAireSec200 = tiempoDe { funAireSec200("SFO", "ATL") }
+val tAirePar200 = tiempoDe { funAirePar200("SFO", "ATL") }
 
-val funAirSeq200 = itinerariosAire(vuelos200b, aeropuertos)
-val funAirPar200 = itinerariosAirePar(vuelos200b, aeropuertos)
+println(s"Tiempo en aire sec 200: $tAireSec200")
+println(s"Tiempo en aire par 200: $tAirePar200")
+println(s"Ganancia aire 200: ${aceleracion(tAireSec200, tAirePar200)}")
 
-val tAirSeq200 = tiempoDe { funAirSeq200("ORD", "TPA") }
-val tAirPar200 = tiempoDe { funAirPar200("ORD", "TPA") }
+*/
 
-println(s"Aire 200 seq: $tAirSeq200")
-println(s"Aire 200 par: $tAirPar200")
-println(s"Aceleración Aire 200: ${speedup(tAirSeq200, tAirPar200)}")
+// 5.==================  itinerarioSalida vs itinerarioSalidaPar  ==================
 
+// --- Dataset pequeño: 15 vuelos (A1) HOU -> BNA ---
+encabezado("itinerarioSalida vs itinerarioSalidaPar - 15 vuelos (A1) HOU -> BNA")
 
+val funSalidaSec15 = itinerarioSalida(vuelosA1, aeropuertos)
+val funSalidaPar15 = itinerarioSalidaPar(vuelosA1, aeropuertos)
 
-// ==================  itinerarioSalida vs itinerarioSalidaPar  ==================
+val tSalidaSec15 = tiempoDe { funSalidaSec15("HOU", "BNA", 18, 30) }
+val tSalidaPar15 = tiempoDe { funSalidaPar15("HOU", "BNA", 18, 30) }
 
-// --- 15 vuelos (A1) HOU -> BNA ---
-titulo("itinerarioSalida vs itinerarioSalidaPar - 15 vuelos (A1) HOU -> BNA")
+println(s"Salida programada sec 15: $tSalidaSec15")
+println(s"Salida programada par 15: $tSalidaPar15")
+println(s"Ratio salida 15: ${aceleracion(tSalidaSec15, tSalidaPar15)}")
 
-val funSalSeq15 = itinerarioSalida(vuelosA1, aeropuertos)
-val funSalPar15 = itinerarioSalidaPar(vuelosA1, aeropuertos)
+// --- Dataset mediano: 40 vuelos (B1) DFW -> ORD ---
+encabezado("itinerarioSalida vs itinerarioSalidaPar - 40 vuelos (B1) DFW -> ORD")
 
-val tSalSeq15 = tiempoDe { funSalSeq15("HOU", "BNA", 18, 30) }
-val tSalPar15 = tiempoDe { funSalPar15("HOU", "BNA", 18, 30) }
+val funSalidaSec40 = itinerarioSalida(vuelosB1, aeropuertos)
+val funSalidaPar40 = itinerarioSalidaPar(vuelosB1, aeropuertos)
 
-println(s"Salida 15 seq: $tSalSeq15")
-println(s"Salida 15 par: $tSalPar15")
-println(s"Aceleración Salida 15: ${speedup(tSalSeq15, tSalPar15)}")
+val tSalidaSec40 = tiempoDe { funSalidaSec40("DFW", "ORD", 18, 30) }
+val tSalidaPar40 = tiempoDe { funSalidaPar40("DFW", "ORD", 18, 30) }
 
-// --- 40 vuelos (B1) DFW -> ORD ---
-titulo("itinerarioSalida vs itinerarioSalidaPar - 40 vuelos (B1) DFW -> ORD")
+println(s"Salida programada sec 40: $tSalidaSec40")
+println(s"Salida programada par 40: $tSalidaPar40")
+println(s"Ratio salida 40: ${aceleracion(tSalidaSec40, tSalidaPar40)}")
 
-val funSalSeq40 = itinerarioSalida(vuelosB1, aeropuertos)
-val funSalPar40 = itinerarioSalidaPar(vuelosB1, aeropuertos)
+/*
+// --- Dataset grande: 100 vuelos (C1) ORD -> TPA ---
+encabezado("itinerarioSalida vs itinerarioSalidaPar - 100 vuelos (C1) ORD -> TPA")
 
-val tSalSeq40 = tiempoDe { funSalSeq40("DFW", "ORD", 18, 30) }
-val tSalPar40 = tiempoDe { funSalPar40("DFW", "ORD", 18, 30) }
+val funSalidaSec100 = itinerarioSalida(vuelosC1, aeropuertos)
+val funSalidaPar100 = itinerarioSalidaPar(vuelosC1, aeropuertos)
 
-println(s"Salida 40 seq: $tSalSeq40")
-println(s"Salida 40 par: $tSalPar40")
-println(s"Aceleración Salida 40: ${speedup(tSalSeq40, tSalPar40)}")
+val tSalidaSec100 = tiempoDe { funSalidaSec100("ORD", "TPA", 18, 30) }
+val tSalidaPar100 = tiempoDe { funSalidaPar100("ORD", "TPA", 18, 30) }
 
-// --- 100 vuelos (C1) ORD -> TPA ---
-titulo("itinerarioSalida vs itinerarioSalidaPar - 100 vuelos (C1) ORD -> TPA")
+println(s"Salida programada sec 100: $tSalidaSec100")
+println(s"Salida programada par 100: $tSalidaPar100")
+println(s"Ratio salida 100: ${aceleracion(tSalidaSec100, tSalidaPar100)}")
 
-val funSalSeq100 = itinerarioSalida(vuelosC1, aeropuertos)
-val funSalPar100 = itinerarioSalidaPar(vuelosC1, aeropuertos)
+// --- Dataset muy grande: 200 vuelos (C1 ++ C2) ORD -> TPA ---
+encabezado("itinerarioSalida vs itinerarioSalidaPar - 200 vuelos (C1 ++ C2) ORD -> TPA")
 
-val tSalSeq100 = tiempoDe { funSalSeq100("ORD", "TPA", 18, 30) }
-val tSalPar100 = tiempoDe { funSalPar100("ORD", "TPA", 18, 30) }
+val funSalidaSec200 = itinerarioSalida(conjuntoVuelos200, aeropuertos)
+val funSalidaPar200 = itinerarioSalidaPar(conjuntoVuelos200, aeropuertos)
 
-println(s"Salida 100 seq: $tSalSeq100")
-println(s"Salida 100 par: $tSalPar100")
-println(s"Aceleración Salida 100: ${speedup(tSalSeq100, tSalPar100)}")
+val tSalidaSec200 = tiempoDe { funSalidaSec200("ORD", "TPA", 18, 30) }
+val tSalidaPar200 = tiempoDe { funSalidaPar200("ORD", "TPA", 18, 30) }
 
-// --- 200 vuelos (C1 ++ C2) ORD -> TPA ---
-titulo("itinerarioSalida vs itinerarioSalidaPar - 200 vuelos (C1 ++ C2) ORD -> TPA")
+println(s"Salida programada sec 200: $tSalidaSec200")
+println(s"Salida programada par 200: $tSalidaPar200")
+println(s"Ratio salida 200: ${aceleracion(tSalidaSec200, tSalidaPar200)}")
 
-val funSalSeq200 = itinerarioSalida(vuelos200b, aeropuertos)
-val funSalPar200 = itinerarioSalidaPar(vuelos200b, aeropuertos)
+*/
 
-val tSalSeq200 = tiempoDe { funSalSeq200("ORD", "TPA", 18, 30) }
-val tSalPar200 = tiempoDe { funSalPar200("ORD", "TPA", 18, 30) }
-
-println(s"Salida 200 seq: $tSalSeq200")
-println(s"Salida 200 par: $tSalPar200")
-println(s"Aceleración Salida 200: ${speedup(tSalSeq200, tSalPar200)}")
-
-
-
-println("\nBENCHMARKS COMPLETADOS")
+println("\n*** PRUEBAS DE RENDIMIENTO FINALIZADAS ***")
