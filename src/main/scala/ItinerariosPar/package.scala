@@ -3,13 +3,17 @@ import scala.collection.parallel.CollectionConverters._
 import scala.collection.parallel.immutable.ParSeq
 
 package object ItinerariosPar {
-  
+
   import Datos._
   import common._
   import Itinerarios._
 
 
+  // ===================================================================
   // Función 1. itinerariosPar
+  // Descripción: Versión paralela de itinerarios. Divide la búsqueda
+  // de rutas usando paralelismo de tareas cuando hay suficientes vuelos
+  // ===================================================================
   def itinerariosPar(vuelos: List[Vuelo],
                      aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
 
@@ -21,7 +25,7 @@ package object ItinerariosPar {
         else pertenece(x, t)
     }
 
-    val UMBRAL = 4
+    val UMBRAL = 4 // Umbral para decidir cuándo paralelizar
 
     def verCaminosPar(actual: String,
                       dst: String,
@@ -39,9 +43,11 @@ package object ItinerariosPar {
             subcaminos.map(camino => v :: camino)
           }
 
+        // Paralelizar solo si hay suficientes vuelos
         if (salidas.length <= UMBRAL) {
-          procesar(salidas)
+          procesar(salidas) // Procesamiento secuencial
         } else {
+          // Dividir en dos mitades y procesarlas en paralelo
           val (izq, der) = salidas.splitAt(salidas.length / 2)
 
           val tareaIzq = task {
@@ -60,12 +66,17 @@ package object ItinerariosPar {
     }
   }
 
+  // ===================================================================
   // Función 2. itinerariosTiempoPar
+  // Descripción: Versión paralela de itinerariosTiempo. Usa parallel()
+  // para calcular GMT en paralelo y tasks para evaluar tiempos
+  // ===================================================================
 
   def obtenerTiempoEsperaPar(aeropuertos: List[Aeropuerto], itinerario: Itinerario, acc: Int): Int = {
     itinerario match {
       case Nil | _ :: Nil => acc
       case vuelo1 :: vuelo2 :: tail => {
+        // Calcular GMTs en paralelo
         val (v1DstGMT, v2OrgGMT) = parallel(obtenerGMT(aeropuertos, vuelo1.Dst), obtenerGMT(aeropuertos, vuelo2.Org))
 
         val HLv1GMT = if (vuelo1.HL - v1DstGMT < 0) (vuelo1.HL - v1DstGMT + 24) else (vuelo1.HL - v1DstGMT)
@@ -80,6 +91,7 @@ package object ItinerariosPar {
 
   def obtenerTiempoVueloPar(aeropuertos: List[Aeropuerto], itinerario: Itinerario): Int = {
     itinerario.foldRight(0)((vuelo, acc) => {
+      // Calcular GMTs en paralelo
       val (vOrgGMT, vDstGMT) = parallel(obtenerGMT(aeropuertos, vuelo.Org), obtenerGMT(aeropuertos, vuelo.Dst))
       val HSvGMT = if (vuelo.HS - vOrgGMT < 0) (vuelo.HS - vOrgGMT + 24) else (vuelo.HS - vOrgGMT)
       val HLvGMT = if (vuelo.HL - vDstGMT < 0) (vuelo.HL - vDstGMT + 24) else (vuelo.HL - vDstGMT)
@@ -92,18 +104,24 @@ package object ItinerariosPar {
     (a: String, b: String) => {
 
       def obtenerTiempoTotal(itinerario: Itinerario): Int = {
+        // Calcular tiempo de vuelo y espera en paralelo
         val (tiempoVuelo, tiempoEspera) = parallel(obtenerTiempoVueloPar(aeropuertos, itinerario), obtenerTiempoEsperaPar(aeropuertos, itinerario, 0))
         tiempoVuelo + tiempoEspera
       }
 
       val todosItinerarios = itinerariosPar(vuelos, aeropuertos)(a, b)
 
+      // Evaluar tiempo de cada itinerario en paralelo usando tasks
       todosItinerarios.map(itinerario => task((itinerario, obtenerTiempoTotal(itinerario))))
         .map(_.join()).sortBy(_._2).take(3).map(_._1)
     }
   }
 
+  // ===================================================================
   // Función 3. itinerariosEscalasPar
+  // Descripción: Versión paralela de itinerariosEscalas. Usa colecciones
+  // paralelas (.par) para calcular escalas de múltiples itinerarios
+  // ===================================================================
 
   def itinerariosEscalasPar(vuelos: List[Vuelo],
                             aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
@@ -127,6 +145,7 @@ package object ItinerariosPar {
     (org: String, dst: String) => {
       val todos: List[Itinerario] = itBasePar(org, dst)
 
+      // Calcular escalas en paralelo usando colecciones paralelas
       val itinerariosConEscalas: ParSeq[(Itinerario, Int)] =
         todos.par.map(it => (it, numEscalasTotales(it)))
 
@@ -136,7 +155,11 @@ package object ItinerariosPar {
     }
   }
 
+  // ===================================================================
   // Función 4. itinerariosAirePar
+  // Descripción: Versión paralela de itinerariosAire. Usa tasks para
+  // calcular el tiempo en el aire de cada itinerario en paralelo
+  // ===================================================================
 
   def itinerariosAirePar(vuelos: List[Vuelo],
                          aeropuertos: List[Aeropuerto]): (String, String) => List[Itinerario] = {
@@ -149,6 +172,7 @@ package object ItinerariosPar {
       val todos: List[Itinerario] =
         itinerariosPar(vuelos, aeropuertos)(cod1, cod2)
 
+      // Calcular tiempo en aire para cada itinerario usando tasks
       val pares: List[(Itinerario, Int)] =
         todos
           .map(it => task((it, tiempoEnAire(it))))
@@ -161,10 +185,15 @@ package object ItinerariosPar {
     }
   }
 
+  // ===================================================================
   // Función 5. itinerarioSalidaPar
+  // Descripción: Versión paralela de itinerarioSalida. Usa tasks para
+  // calcular el score de salida de cada itinerario en paralelo
+  // ===================================================================
 
   def itinerarioSalidaPar(vuelos: List[Vuelo], aeropuertos: List[Aeropuerto]): (String, String, Int, Int) => Itinerario = {
 
+    // Calcula un puntaje: hora de salida (penalizado si llega tarde)
     def calcularScoreSalida(itinerario: Itinerario, hCita: Int, mCita: Int): Int = {
       val primerVuelo = itinerario.head
       val ultimoVuelo = itinerario.last
@@ -176,7 +205,7 @@ package object ItinerariosPar {
       if (llegadaMinutos <= citaMinutos) {
         salidaMinutos
       } else {
-        salidaMinutos - 1440
+        salidaMinutos - 1440 // Penalizar si llega tarde
       }
     }
 
@@ -188,6 +217,7 @@ package object ItinerariosPar {
         throw new Exception(s"No existen rutas entre $org y $dst")
       }
 
+      // Calcular score de cada itinerario en paralelo usando tasks
       val itinerariosConScore = todosItinerarios.map { itin =>
         task {
           (itin, calcularScoreSalida(itin, hCita, mCita))
